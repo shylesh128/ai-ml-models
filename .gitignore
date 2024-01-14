@@ -3,6 +3,7 @@ __pycache__/
 
 # Environment folder
 venv/
+menv/
 
 # Compiled Python files
 *.pyc

@@ -1,0 +1,26 @@
+# Byte-compiled files
+__pycache__/
+
+# Environment folder
+venv/
+
+# Compiled Python files
+*.pyc
+*.pyo
+*.pyd
+
+# IDE and text editor files
+.vscode/
+.idea/
+
+# System files
+.DS_Store
+
+# Log files
+*.log
+
+# Database
+db.sqlite
+
+# Configuration files with sensitive information
+config.py

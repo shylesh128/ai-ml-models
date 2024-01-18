@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Prediction</title>
+
+    <style>
+      body {
+        background-color: #1a1a1a;
+        color: #fff;
+        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-direction: column;
+        height: 100vh;
+      }
+
+      h1 {
+        text-align: center;
+        margin-top: 20px;
+        color: #3498db;
+      }
+
+      form {
+        max-width: 400px;
+        width: 100%;
+        text-align: center;
+        padding: 20px;
+        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        background-color: #2c3e50;
+        border-radius: 10px;
+      }
+
+      input[type="file"] {
+        display: none;
+      }
+
+      label {
+        cursor: pointer;
+        background-color: #3498db;
+        color: #fff;
+        padding: 12px 0;
+        border-radius: 5px;
+        transition: background-color 0.3s;
+        display: block;
+        margin-bottom: 20px;
+        font-size: 14px;
+      }
+
+      label:hover {
+        background-color: #2980b9;
+      }
+
+      #imageInput {
+        display: none;
+      }
+
+      #imagePreview {
+        display: none;
+        max-width: 100%;
+        margin: auto;
+        border-radius: 10px;
+        height: 300px;
+      }
+
+      button {
+        background-color: #3498db;
+        color: #fff;
+        padding: 12px 0;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: background-color 0.3s;
+        display: block;
+        width: 100%;
+        font-size: 16px;
+      }
+
+      button:hover {
+        background-color: #2980b9;
+      }
+    </style>
+  </head>
+
+  <body>
+    <h1>Image Prediction</h1>
+
+    <form id="imageForm" enctype="multipart/form-data">
+      <img id="imagePreview" src="#" alt="Image Preview" />
+
+      <label for="imageInput">Choose Image</label>
+
+      <div id="predictionResult" style="display: none">
+        <p id="predictionPercentage"></p>
+        <p id="predictedObject"></p>
+      </div>
+      <input
+        type="file"
+        accept="image/*"
+        id="imageInput"
+        name="image"
+        required
+      />
+
+      <button type="button" onclick="predict()">Predict</button>
+    </form>
+
+    <script>
+      function previewImage() {
+        var input = document.getElementById("imageInput");
+        var preview = document.getElementById("imagePreview");
+
+        input.addEventListener("change", function () {
+          var file = input.files[0];
+          var reader = new FileReader();
+
+          reader.onload = function (e) {
+            preview.src = e.target.result;
+            preview.style.display = "block";
+          };
+
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function predict() {
+        var form = document.getElementById("imageForm");
+        var formData = new FormData(form);
+
+        fetch("/predict", {
+          method: "POST",
+          body: formData,
+        })
+          .then((response) => response.json())
+          .then((data) => {
+            console.log(data);
+
+            // Update the HTML with the prediction result
+            var predictionPercentage = (data.prediction * 100).toFixed(2);
+            var result = data.result;
+
+            var resultDiv = document.getElementById("predictionResult");
+            var percentageElement = document.getElementById(
+              "predictionPercentage"
+            );
+            var objectElement = document.getElementById("predictedObject");
+
+            percentageElement.textContent =
+              "Prediction: " + predictionPercentage + "%";
+            objectElement.textContent = "Object: " + result;
+
+            resultDiv.style.display = "block";
+          })
+          .catch((error) => console.error("Error:", error));
+      }
+
+      // Call the previewImage function when the page is loaded
+      window.onload = previewImage;
+    </script>
+  </body>
+</html>

@@ -19,7 +19,7 @@ class_names = {
     9: 'truck',
 }
 
-model = models.load_model('models/image-prediction.keras')
+model = models.load_model('ai-models/image-prediction.keras')
 app = Flask(__name__, template_folder='templates')
 
 def predict_image(model, path_to_image):

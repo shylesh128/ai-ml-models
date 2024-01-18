@@ -1,40 +1,27 @@
-import os
-import tempfile
 
 from flask import Flask, render_template, request, jsonify
-from keras import models
-from PIL import Image
+import cv2
 import numpy as np
+import tensorflow as tf
+from keras.models import load_model
+
+
+model = load_model('ai-models/chart-text-class-m2.h5')
+model.summary()
 
 class_names = {
-    0: 'airplane',
-    1: 'automobile',
-    2: 'bird',
-    3: 'cat',
-    4: 'deer',
-    5: 'dog',
-    6: 'frog',
-    7: 'horse',
-    8: 'ship',
-    9: 'truck',
+    'animal': 0,
+    'chart': 1,
+    'human': 2,
+    'objects': 3,
+    'scenery': 4,
+    'text': 5,
+    'vehicle': 6
 }
 
-model = models.load_model('ai-models/image-prediction.keras')
-app = Flask(__name__, template_folder='templates')
+# app = Flask(__name__, template_folder='templates')
+app = Flask(__name__, template_folder='templates', static_folder='static', static_url_path='/static')
 
-def predict_image(model, path_to_image):
-    img = Image.open(path_to_image)
-    img = img.convert("RGB")
-    img = img.resize((32,32))
-    data = np.asanyarray(img)
-    data = data/255
-    print(data[0][0], "after")
-    probs = model.predict(np.array([data])[:1])
-    print(probs)
-    top_prob = probs.max()
-    top_pred = class_names[np.argmax(probs)]
-    print(top_prob, top_pred)
-    return top_prob, top_pred
 
 
 @app.route('/')
@@ -43,47 +30,32 @@ def index():
 
 @app.route('/predict', methods=['POST'])
 def predict():
-    # Handle the image prediction logic here
-    if 'image' not in request.files:
-        return jsonify({'error': 'No file part'})
-
-    uploaded_file = request.files['image']
-
-    if uploaded_file.filename == '':
-        return jsonify({'error': 'No selected file'})
-
     try:
-        temp_dir = tempfile.mkdtemp()
-        temp_path = os.path.join(temp_dir, uploaded_file.filename)
-        uploaded_file.save(temp_path)
-        percentage, result = predict_image(model, temp_path)
-
+        # Get image from the request
+        file = request.files['image']
         
+        # Read and preprocess the image
+        img = cv2.imdecode(np.frombuffer(file.read(), np.uint8), cv2.IMREAD_COLOR)
+        resize = tf.image.resize(img, (256, 256))
+        img_array = np.expand_dims(resize / 255, 0)
 
-        # Convert float to a Python float
-        percentage = float(percentage)
-        print(result)
+        # Make predictions
+        yhat = model.predict(img_array)
+        predicted_index = np.argmax(yhat)
+        predicted_class = [key for key, value in class_names.items() if value == predicted_index][0]
+        yhat_list = yhat.tolist()
 
-        # Create a dictionary with standard Python data types
-        response_data = {'prediction': percentage, 'result': result}
-        
+        # Prepare response
+        response_data = {
+            "predicted_class": predicted_class,
+            "predicted_percentage": yhat_list[0][predicted_index],
+            "all_predicted_classes": {class_name: yhat_list[0][index] for class_name, index in class_names.items()}
+        }
+
         return jsonify(response_data)
-    
+
     except Exception as e:
-        return jsonify({'error': str(e)})
-
-    finally:
-        # Clean up: remove the temporary directory and its contents
-        if os.path.exists(temp_dir):
-            for file_name in os.listdir(temp_dir):
-                file_path = os.path.join(temp_dir, file_name)
-                try:
-                    if os.path.isfile(file_path):
-                        os.unlink(file_path)
-                except Exception as e:
-                    print(f"Error cleaning up {file_path}: {e}")
-
-            os.rmdir(temp_dir)
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -5,85 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Image Prediction</title>
 
-    <style>
-      body {
-        background-color: #1a1a1a;
-        color: #fff;
-        font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-        margin: 0;
-        padding: 0;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-direction: column;
-        height: 100vh;
-      }
-
-      h1 {
-        text-align: center;
-        margin-top: 20px;
-        color: #3498db;
-      }
-
-      form {
-        max-width: 400px;
-        width: 100%;
-        text-align: center;
-        padding: 20px;
-        box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
-        background-color: #2c3e50;
-        border-radius: 10px;
-      }
-
-      input[type="file"] {
-        display: none;
-      }
-
-      label {
-        cursor: pointer;
-        background-color: #3498db;
-        color: #fff;
-        padding: 12px 0;
-        border-radius: 5px;
-        transition: background-color 0.3s;
-        display: block;
-        margin-bottom: 20px;
-        font-size: 14px;
-      }
-
-      label:hover {
-        background-color: #2980b9;
-      }
-
-      #imageInput {
-        display: none;
-      }
-
-      #imagePreview {
-        display: none;
-        max-width: 100%;
-        margin: auto;
-        border-radius: 10px;
-        height: 300px;
-      }
-
-      button {
-        background-color: #3498db;
-        color: #fff;
-        padding: 12px 0;
-        border: none;
-        border-radius: 5px;
-        cursor: pointer;
-        transition: background-color 0.3s;
-        display: block;
-        width: 100%;
-        font-size: 16px;
-      }
-
-      button:hover {
-        background-color: #2980b9;
-      }
-    </style>
+    <link
+      rel="stylesheet"
+      type="text/css"
+      href="{{ url_for('static', filename='css/global.css') }}"
+    />
   </head>
 
   <body>
@@ -94,7 +20,7 @@
 
       <label for="imageInput">Choose Image</label>
 
-      <div id="predictionResult" style="display: none">
+      <div id="predictionResult">
         <p id="predictionPercentage"></p>
         <p id="predictedObject"></p>
       </div>
@@ -140,8 +66,10 @@
             console.log(data);
 
             // Update the HTML with the prediction result
-            var predictionPercentage = (data.prediction * 100).toFixed(2);
-            var result = data.result;
+            var predictionPercentage = (
+              data.predicted_percentage * 100
+            ).toFixed(2);
+            var result = data.predicted_class;
 
             var resultDiv = document.getElementById("predictionResult");
             var percentageElement = document.getElementById(

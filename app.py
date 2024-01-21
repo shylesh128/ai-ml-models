@@ -52,6 +52,8 @@ def predict():
             "all_predicted_classes": {class_name: yhat_list[0][index] for class_name, index in class_names.items()}
         }
 
+        
+
         return jsonify(response_data)
 
     except Exception as e:

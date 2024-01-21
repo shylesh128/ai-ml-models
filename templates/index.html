@@ -18,11 +18,12 @@
     <form id="imageForm" enctype="multipart/form-data">
       <img id="imagePreview" src="#" alt="Image Preview" />
 
-      <label for="imageInput">Choose Image</label>
+      <label for="imageInput" id="chooseImageLabel">Choose Image</label>
 
       <div id="predictionResult">
-        <p id="predictionPercentage"></p>
-        <p id="predictedObject"></p>
+        <h2 id="predictionPercentage"></h2>
+        <h2 id="predictedObject"></h2>
+        <p id="allPredictions"></p>
       </div>
       <input
         type="file"
@@ -30,9 +31,13 @@
         id="imageInput"
         name="image"
         required
+        onchange="validateImage()"
       />
 
-      <button type="button" onclick="predict()">Predict</button>
+      <button type="button" onclick="predict()" id="predictButton" disabled>
+        Predict
+      </button>
+      <div id="loader" class="loader"></div>
     </form>
 
     <script>
@@ -47,15 +52,32 @@
           reader.onload = function (e) {
             preview.src = e.target.result;
             preview.style.display = "block";
+            document
+              .getElementById("predictButton")
+              .removeAttribute("disabled");
           };
 
           reader.readAsDataURL(file);
         });
       }
 
+      function validateImage() {
+        var input = document.getElementById("imageInput");
+        var chooseImageLabel = document.getElementById("chooseImageLabel");
+
+        if (input.files.length > 0) {
+          chooseImageLabel.textContent = "Image selected";
+        } else {
+          chooseImageLabel.textContent = "Choose Image";
+        }
+      }
+
       function predict() {
         var form = document.getElementById("imageForm");
         var formData = new FormData(form);
+
+        // Display loader while waiting for prediction
+        document.getElementById("loader").style.display = "block";
 
         fetch("/predict", {
           method: "POST",
@@ -76,18 +98,62 @@
               "predictionPercentage"
             );
             var objectElement = document.getElementById("predictedObject");
+            var allPredictionsElement =
+              document.getElementById("allPredictions");
 
             percentageElement.textContent =
               "Prediction: " + predictionPercentage + "%";
             objectElement.textContent = "Object: " + result;
 
+            // Display all predicted classes and percentages
+            var allPredictionsText = "All Predictions:<br>";
+            for (var className in data.all_predicted_classes) {
+              var percentage = (
+                data.all_predicted_classes[className] * 100
+              ).toFixed(2);
+              allPredictionsText += className + ": " + percentage + "%<br>";
+            }
+            allPredictionsElement.innerHTML = allPredictionsText;
+
             resultDiv.style.display = "block";
+
+            // Hide loader after prediction
+            document.getElementById("loader").style.display = "none";
           })
-          .catch((error) => console.error("Error:", error));
+          .catch((error) => {
+            console.error("Error:", error);
+
+            // Hide loader on error
+            document.getElementById("loader").style.display = "none";
+          });
       }
 
       // Call the previewImage function when the page is loaded
       window.onload = previewImage;
     </script>
+
+    <style>
+      /* Add loader styling */
+      .loader {
+        border: 8px solid #f3f3f3;
+        border-top: 8px solid #3498db;
+        border-radius: 50%;
+        width: 50px;
+        height: 50px;
+        animation: spin 1s linear infinite;
+        display: none; /* Initially hidden */
+        margin: 20px auto;
+      }
+
+      @keyframes spin {
+        0% {
+          transform: rotate(0deg);
+        }
+
+        100% {
+          transform: rotate(360deg);
+        }
+      }
+    </style>
   </body>
 </html>
